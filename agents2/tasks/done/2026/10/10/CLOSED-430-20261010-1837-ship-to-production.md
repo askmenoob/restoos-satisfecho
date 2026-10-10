@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Human requested an immediate production ship (#430); development was promoted to master and amvara9 deployed.
+- **What was done:** Merged master into development to resolve divergence, forced promote through 2.1.183 (`a8f062bcf`), published release v2.1.183, Deploy to amvara9 succeeded.
+- **What was tested:** Master tip, GHA deploy success, release tag, and production `/` + `/api/health` + `app-version` 2.1.183 — all PASS.
+- **Why closed:** All testing criteria passed; ship request fully delivered.
+- **Closed at (UTC):** 2026-10-10 18:44
+---
+
 # Ship to Production (#430)
 
 ## GitHub Issues
@@ -5,7 +15,7 @@
 - **430**
 
 ## Status
-- **UNTESTED** — Agent 010 finished promote + deploy **2026-10-10T18:42:50Z** UTC. Awaiting tester.
+- **CLOSED** — Tester **PASS** **2026-10-10T18:43:49Z** UTC. See Test report.
 - Preflight: actionable. Local smoke: `http://127.0.0.1:14202/` and `/api/health` → **200**. Front logs (10m): no Angular build failures.
 - Version on development: **2.1.183** (menu offer photo crop #429 already in changelog); `[Unreleased]` empty — no bump.
 - Divergence at start: `origin/development` **572a9c24d** ahead **4** / behind **1** vs `origin/master` **15ae66b41**. Merged `master` into `development` (**80c359656**), then promoted with `AGENT_PROMOTE=1 AGENT_PROMOTE_FORCE=1 AGENT_PROMOTE_WAIT_DEPLOY=1`.
@@ -41,3 +51,25 @@ See **`docs/0001-ci-cd-amvara9.md`**, **`scripts/promote-development-to-master.s
    - `curl -s -o /dev/null -w "%{http_code}" https://satisfecho.de/api/health` → **200**; body `{"status":"ok"}`
    - Landing HTML includes `<meta name="app-version" content="2.1.183">`
 5. Optional: open https://satisfecho.de/ and check footer shows **2.1.183**.
+
+## Test report
+
+1. **Date/time (UTC):** start **2026-10-10T18:43:39Z**, end **2026-10-10T18:43:55Z**. Log window N/A for amvara9 host containers (production HTTP + GitHub API evidence only).
+2. **Environment:** production **https://satisfecho.de**; branch verification via `git fetch origin master` / `origin/development`; no local compose for this release check.
+3. **What was tested:** Testing instructions 1–5 (master tip, Deploy to amvara9 GHA, release tag, production `/` + `/api/health` + `app-version` meta; optional version string in landing HTML).
+4. **Results:**
+   - Master tip **a8f062bcf** with subject “Merge development: release through 2.1.183 …” — **PASS** (`git rev-parse origin/master` / `git log -1`).
+   - GHA run **38076648443** conclusion **success**, headSha **a8f062bcf…**, updatedAt **2026-10-10T18:42:30Z** — **PASS** (`gh run view`).
+   - Release **v2.1.183** on **master** — **PASS** (`gh release view`; https://github.com/satisfecho/pos/releases/tag/v2.1.183).
+   - `https://satisfecho.de/` → **HTTP 200** — **PASS**.
+   - `https://satisfecho.de/api/health` → **HTTP 200**, body `{"status":"ok"}` — **PASS**.
+   - Landing HTML `<meta name="app-version" content="2.1.183">` — **PASS** (grep on downloaded index).
+   - Optional footer/version **2.1.183**: confirmed via meta on landing HTML — **PASS**.
+5. **Overall:** **PASS**.
+6. **Product owner feedback:** Production is on **2.1.183** after a clean promote and green amvara9 deploy. Health and landing respond correctly; ship request for #430 is satisfied. No further release action needed from this task.
+7. **URLs tested:**
+   1. https://satisfecho.de/
+   2. https://satisfecho.de/api/health
+   3. https://github.com/satisfecho/pos/actions/runs/38076648443
+   4. https://github.com/satisfecho/pos/releases/tag/v2.1.183
+8. **Relevant log excerpts:** N/A — no local Docker containers used; evidence is HTTP responses + GitHub Actions/release API as above. Deploy readiness inferred from GHA **success** (updatedAt **18:42:30Z**) before smoke at **18:43:39Z**, not a fixed sleep.
