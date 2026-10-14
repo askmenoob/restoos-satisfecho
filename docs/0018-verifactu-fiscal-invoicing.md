@@ -49,6 +49,10 @@ Configure via **Settings → Payments** (fiscal section) or **PUT `/tenant/setti
 
 When **`fiscal_mode`** is `test` or `live`, **Print Factura** (orders modal) and **print from edit order** call **issue** first, then render the invoice HTML including the **fiscal block** (QR + text).
 
+Angular API client: `issueOrderFiscalInvoice`, `getOrderFiscalInvoice`, `cancelOrderFiscalInvoice` (`api.service.ts`). There is **no dedicated staff button** for anulación yet — use the cancel API (or a future UI) before delete/edit when immutability returns **409**. Delete-order errors surface the server `detail` string when present.
+
+See **`docs/0065-verifactu-production.md`** (*Remaining gaps*) for what is still missing for production live remisión.
+
 ## Environment
 
 | Variable | Meaning |

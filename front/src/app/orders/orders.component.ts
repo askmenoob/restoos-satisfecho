@@ -4346,7 +4346,15 @@ export class OrdersComponent implements OnInit, OnDestroy {
             this.orders.update(list => list.filter(o => o.id !== order.id));
             this.showToast(this.translate.instant('ORDERS.DELETE_ORDER_DONE'), 'success');
           },
-          error: () => this.showToast(this.translate.instant('ORDERS.DELETE_ORDER_FAILED'), 'error')
+          error: (err: { error?: { detail?: unknown }; status?: number }) => {
+            const detail = err?.error?.detail;
+            // Surface fiscal immutability (409) so staff know to run anulación first.
+            const msg =
+              typeof detail === 'string' && detail.trim()
+                ? detail
+                : this.translate.instant('ORDERS.DELETE_ORDER_FAILED');
+            this.showToast(msg, 'error');
+          },
         });
       },
       { confirmText: this.translate.instant('ORDERS.DELETE_ORDER') }

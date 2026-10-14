@@ -14,6 +14,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Fixed
 
+## [2.1.184] - 2026-10-14
+
+### Added
+
+- **VeriFactu status / gap audit (#431):** Documented ships-today vs remaining gaps for live AEAT remisión in `docs/0065` (ops credentials, unlock, anulación UI, multi-rate IVA); cross-links in `docs/0018` and ROADMAP.
+- **Fiscal cancel API client (#431):** Angular `cancelOrderFiscalInvoice` plus richer `FiscalInvoicePublic` fields for anulación / hash / submission status.
+
+### Fixed
+
+- **Delete order fiscal 409 toast (#431):** When a fiscally issued order cannot be deleted, the staff toast shows the server immutability `detail` instead of a generic failure message.
+
 ## [2.1.183] - 2026-10-10
 
 ### Fixed

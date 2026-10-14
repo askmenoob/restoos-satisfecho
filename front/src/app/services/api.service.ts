@@ -1454,9 +1454,16 @@ export interface FiscalInvoicePublic {
   full_number: string;
   mode: string;
   status: string;
+  record_type?: string;
   issued_at: string | null;
   verification_qr_content: string;
   verification_text: string;
+  previous_hash?: string;
+  record_hash?: string;
+  amount_cents?: number;
+  submission_status?: string;
+  sandbox_submitted_at?: string | null;
+  cancels_fiscal_invoice_id?: number | null;
 }
 
 /** German TSE transaction metadata (KassenSichV preparation — not a certification claim). */
@@ -3129,6 +3136,11 @@ export class ApiService {
 
   getOrderFiscalInvoice(orderId: number): Observable<FiscalInvoicePublic> {
     return this.http.get<FiscalInvoicePublic>(`${this.apiUrl}/orders/${orderId}/fiscal-invoice`);
+  }
+
+  /** Anulación (credit-note cancel) for an active fiscal alta — see docs/0018. */
+  cancelOrderFiscalInvoice(orderId: number): Observable<FiscalInvoicePublic> {
+    return this.http.post<FiscalInvoicePublic>(`${this.apiUrl}/orders/${orderId}/fiscal-invoice/cancel`, {});
   }
 
   getOrderTseTransaction(orderId: number): Observable<TseTransactionPublic> {
