@@ -1011,6 +1011,14 @@ ModuleRegistry.registerModules([
                     }
                   </select>
                 </div>
+                @if (fiscalInvoicingEnabled() && hasActiveFiscalAlta(editOrderFiscalInvoice())) {
+                  <div class="fiscal-anulacion-block">
+                    <p class="fiscal-anulacion-hint">{{ 'ORDERS.FISCAL_ANULACION_HINT' | translate }}: {{ editOrderFiscalInvoice()!.full_number }}</p>
+                    <button type="button" class="btn btn-secondary btn-fiscal-cancel" (click)="cancelFiscalInvoiceForOrder(order, 'edit')" [disabled]="cancellingFiscalInvoice()">
+                      {{ cancellingFiscalInvoice() ? ('COMMON.LOADING' | translate) : ('ORDERS.FISCAL_ANULACION' | translate) }}
+                    </button>
+                  </div>
+                }
               </div>
               <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" (click)="closeOrderEdit()">{{ 'COMMON.CLOSE' | translate }}</button>
@@ -1171,6 +1179,14 @@ ModuleRegistry.registerModules([
                     }
                   </select>
                 </div>
+                @if (fiscalInvoicingEnabled() && hasActiveFiscalAlta(facturaFiscalInvoice())) {
+                  <div class="fiscal-anulacion-block">
+                    <p class="fiscal-anulacion-hint">{{ 'ORDERS.FISCAL_ANULACION_HINT' | translate }}: {{ facturaFiscalInvoice()!.full_number }}</p>
+                    <button type="button" class="btn btn-secondary btn-fiscal-cancel" (click)="cancelFiscalInvoiceForOrder(facturaOrder()!, 'factura')" [disabled]="cancellingFiscalInvoice()">
+                      {{ cancellingFiscalInvoice() ? ('COMMON.LOADING' | translate) : ('ORDERS.FISCAL_ANULACION' | translate) }}
+                    </button>
+                  </div>
+                }
               </div>
               <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" (click)="closeFacturaModal()">{{ 'COMMON.CANCEL' | translate }}</button>
@@ -2220,6 +2236,26 @@ ModuleRegistry.registerModules([
 
     .modal-order-edit { max-width: 520px; }
     .modal-order-edit .modal-body { max-height: 70vh; overflow-y: auto; }
+    .fiscal-anulacion-block {
+      margin-top: var(--space-3, 12px);
+      padding: 12px;
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      border-radius: 8px;
+      background: rgba(220, 38, 38, 0.04);
+    }
+    .fiscal-anulacion-hint {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--color-text, #1e293b);
+      line-height: 1.4;
+    }
+    .btn-fiscal-cancel {
+      border-color: rgba(220, 38, 38, 0.35);
+      color: var(--color-error, #dc2626);
+    }
+    .btn-fiscal-cancel:hover:not(:disabled) {
+      background: rgba(220, 38, 38, 0.08);
+    }
     .edit-order-items { margin-bottom: var(--space-4); }
     .edit-order-label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: var(--space-2); }
     .edit-order-row {
@@ -2589,12 +2625,17 @@ export class OrdersComponent implements OnInit, OnDestroy {
   facturaCustomerId: number | null = null;
   /** When true, modal is in "Edit order" mode (Save primary); when false, "Print Factura" mode (Print primary). */
   facturaModalEditMode = signal<boolean>(false);
+  /** Active fiscal alta for Factura modal (null if none / cancelled). */
+  facturaFiscalInvoice = signal<FiscalInvoicePublic | null>(null);
 
   /** Full order edit widget: add/remove/change items, billing, print. Same modal from cards and history. */
   editOrder = signal<Order | null>(null);
   editOrderTenantProducts = signal<TenantProduct[]>([]);
   editOrderBillingCustomers = signal<BillingCustomer[]>([]);
   editOrderBillingId: number | null = null;
+  /** Active fiscal alta for edit-order modal (null if none / cancelled). */
+  editOrderFiscalInvoice = signal<FiscalInvoicePublic | null>(null);
+  cancellingFiscalInvoice = signal(false);
   addItemProductId: number | null = null;
   addItemQuantity = 1;
   addItemNotes = '';
@@ -3323,6 +3364,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (this.fiscalInvoicingEnabled()) {
       this.api.issueOrderFiscalInvoice(order.id).subscribe({
         next: (fi) => {
+          this.editOrderFiscalInvoice.set(fi);
           void this.printInvoice(order, customer ?? undefined, fi);
         },
         error: (err: { error?: { detail?: unknown } }) => {
@@ -3659,15 +3701,18 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.facturaModalEditMode.set(false);
     this.facturaOrder.set(order);
     this.facturaCustomerId = order.billing_customer_id ?? null;
+    this.facturaFiscalInvoice.set(null);
     this.api.getBillingCustomers().subscribe({
       next: list => this.facturaCustomers.set(list),
       error: () => this.facturaCustomers.set([])
     });
+    this.loadFiscalAltaForOrder(order.id, 'factura');
   }
 
   openOrderEdit(order: Order) {
     this.editOrder.set(order);
     this.editOrderBillingId = order.billing_customer_id ?? null;
+    this.editOrderFiscalInvoice.set(null);
     this.addItemProductId = null;
     this.addItemQuantity = 1;
     this.addItemNotes = '';
@@ -3686,6 +3731,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       next: list => this.editOrderBillingCustomers.set(list),
       error: () => this.editOrderBillingCustomers.set([])
     });
+    this.loadFiscalAltaForOrder(order.id, 'edit');
     if (order.table_id != null) {
       this.api.getStaffMenuToken(order.table_id).subscribe({
         next: res => { this.staffMenuToken = res.token; },
@@ -3700,6 +3746,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.editOrder.set(null);
     this.editOrderTenantProducts.set([]);
     this.editOrderBillingCustomers.set([]);
+    this.editOrderFiscalInvoice.set(null);
     this.staffMenuToken = null;
     this.modifierEditItemId = null;
     this.addItemModifiersRemove = '';
@@ -3714,6 +3761,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   closeFacturaModal() {
     this.facturaOrder.set(null);
     this.facturaCustomers.set([]);
+    this.facturaFiscalInvoice.set(null);
     this.facturaModalEditMode.set(false);
   }
 
@@ -3768,6 +3816,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (this.fiscalInvoicingEnabled()) {
       this.api.issueOrderFiscalInvoice(order.id).subscribe({
         next: (fi) => {
+          this.facturaFiscalInvoice.set(fi);
           void this.printInvoice(order, customer ?? undefined, fi);
           this.afterFacturaPrintPersistCustomer(order, customer);
           this.closeFacturaModal();
@@ -3783,7 +3832,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.closeFacturaModal();
   }
 
-  private fiscalInvoicingEnabled(): boolean {
+  fiscalInvoicingEnabled(): boolean {
     const m = this.tenantSettings()?.fiscal_mode;
     return m === 'test' || m === 'live';
   }
@@ -3791,6 +3840,58 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private tseEnabled(): boolean {
     const m = this.tenantSettings()?.tse_mode;
     return m === 'test' || m === 'live';
+  }
+
+  hasActiveFiscalAlta(fi: FiscalInvoicePublic | null | undefined): boolean {
+    if (!fi) return false;
+    const status = (fi.status || '').toLowerCase();
+    return status !== 'cancelled' && status !== 'void';
+  }
+
+  private loadFiscalAltaForOrder(orderId: number | undefined | null, target: 'factura' | 'edit') {
+    if (!orderId || !this.fiscalInvoicingEnabled()) {
+      if (target === 'factura') this.facturaFiscalInvoice.set(null);
+      else this.editOrderFiscalInvoice.set(null);
+      return;
+    }
+    this.api.getOrderFiscalInvoice(orderId).subscribe({
+      next: (fi) => {
+        if (target === 'factura') this.facturaFiscalInvoice.set(fi);
+        else this.editOrderFiscalInvoice.set(fi);
+      },
+      error: () => {
+        if (target === 'factura') this.facturaFiscalInvoice.set(null);
+        else this.editOrderFiscalInvoice.set(null);
+      },
+    });
+  }
+
+  cancelFiscalInvoiceForOrder(order: Order, target: 'factura' | 'edit') {
+    if (!order?.id || !this.fiscalInvoicingEnabled()) return;
+    this.openConfirmModal(
+      this.translate.instant('ORDERS.FISCAL_ANULACION_CONFIRM'),
+      () => {
+        this.cancellingFiscalInvoice.set(true);
+        this.api.cancelOrderFiscalInvoice(order.id!).subscribe({
+          next: (fi) => {
+            this.cancellingFiscalInvoice.set(false);
+            if (target === 'factura') this.facturaFiscalInvoice.set(null);
+            else this.editOrderFiscalInvoice.set(null);
+            const num = fi?.full_number || '';
+            this.showToast(
+              this.translate.instant('ORDERS.FISCAL_ANULACION_DONE', { number: num }) ||
+                `Fiscal cancellation issued: ${num}`,
+              'success'
+            );
+          },
+          error: (err: { error?: { detail?: unknown } }) => {
+            this.cancellingFiscalInvoice.set(false);
+            this.showToast(this.fiscalIssueErrorMessage(err), 'error');
+          },
+        });
+      },
+      { confirmText: this.translate.instant('ORDERS.FISCAL_ANULACION') }
+    );
   }
 
   private fiscalIssueErrorMessage(err: { error?: { detail?: unknown } }): string {

@@ -56,7 +56,7 @@ Middleware (chosen provider) owns:
 | Internal hash chain (`previous_hash` → `record_hash`) | **Yes** (#326) |
 | AEAT ValidarQR URL parameters for print QR | **Yes** (shape; cotejo only works after real remisión) |
 | Near-real-time **sandbox** submission in `test` mode | **Yes** (local sandbox status + optional middleware HTTP) |
-| Order immutability after fiscal alta; anulación (credit-note) path | **Yes** API (#326); front client wired (#431); **no dedicated staff UI button yet** |
+| Order immutability after fiscal alta; anulación (credit-note) path | **Yes** API (#326); front client + staff anulación control on Orders Factura/edit (#431) |
 | Settings UI (ES country / fiscal_mode gating) | **Yes** (#392) |
 | Fiskaly SIGN ES / generic / mock adapters | **Yes** (#342) |
 | Print Factura fiscal block (QR + disclaimer) | **Yes** when `fiscal_mode` is test/live |
@@ -73,13 +73,13 @@ Honest product status as of the #431 audit (not a certification claim):
 | **Commercial Fiskaly (or alternate) credentials** + TEST→LIVE verification | Ops / vendor contract | Without these, live remisión cannot be proven end-to-end |
 | **`FISCAL_LIVE_UNLOCK=true` on prod** only after sandbox sign-off | Platform ops | Keep `false` until credentials verified (`docs/0074`) |
 | **Per-merchant taxpayer / SIGN ES client onboarding** | Merchant + ops | Client UUID in `fiscal_aeat_api_secret` or `FISCAL_FISKALY_CLIENT_ID` |
-| **Fiskaly invoice payload fidelity** | Product / next FEAT | Adapter currently maps a **simplified single-line** invoice (hardcoded 21% VAT); multi-rate IVA / full line items need a follow-up |
+| **Fiskaly invoice payload fidelity** | Done in product (#431) | SIGN ES adapter maps order **line_items** with per-line IVA (`tax_rate_percent`); falls back to single 21% only when lines are missing |
 | **Issuer NIF quality** | Merchant data | Missing `tax_id`/`cif` falls back to placeholder `PENDING00` — QR/cotejo will be wrong until set |
-| **Staff UI for anulación** | Product / next FEAT | Cancel exists as `POST …/fiscal-invoice/cancel` + Angular client; delete/edit still blocked with 409 until cancel is used (API or future button) |
+| **Staff UI for anulación** | Done in product (#431) | Orders Factura + edit-order show cancel (anulación) when an active alta exists; wired to `POST …/fiscal-invoice/cancel` |
 | **`declaración responsable` / legal SIF registration** | Legal / ops | Out of code; not claimed by Satisfecho alone |
 | **Marketing honesty** | Done for now | `/features` + Settings describe preparation/test; do not claim “AEAT certified live” until LIVE verified |
 
-Recommended next issues: (1) ops sandbox with real Fiskaly TEST keys, (2) staff anulación UI, (3) multi-rate line-item mapping for SIGN ES.
+Recommended next issues: (1) ops sandbox with real Fiskaly TEST keys, (2) per-merchant taxpayer / SIGN ES client onboarding, (3) legal `declaración responsable` follow-up.
 
 ## Configuration
 

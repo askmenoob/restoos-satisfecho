@@ -49,7 +49,7 @@ Configure via **Settings → Payments** (fiscal section) or **PUT `/tenant/setti
 
 When **`fiscal_mode`** is `test` or `live`, **Print Factura** (orders modal) and **print from edit order** call **issue** first, then render the invoice HTML including the **fiscal block** (QR + text).
 
-Angular API client: `issueOrderFiscalInvoice`, `getOrderFiscalInvoice`, `cancelOrderFiscalInvoice` (`api.service.ts`). There is **no dedicated staff button** for anulación yet — use the cancel API (or a future UI) before delete/edit when immutability returns **409**. Delete-order errors surface the server `detail` string when present.
+Angular API client: `issueOrderFiscalInvoice`, `getOrderFiscalInvoice`, `cancelOrderFiscalInvoice` (`api.service.ts`). When **`fiscal_mode`** is `test`/`live` and an active alta exists, **Orders** (Print Factura modal and Edit order) show **Cancel fiscal invoice (anulación)** wired to the cancel API. After anulación, delete/edit are allowed again. Delete-order errors still surface the server `detail` string when present.
 
 See **`docs/0065-verifactu-production.md`** (*Remaining gaps*) for what is still missing for production live remisión.
 
@@ -68,9 +68,10 @@ Per-tenant secrets use **`fiscal_aeat_api_secret`** (optional).
 1. Set tenant **`fiscal_mode`** to **`test`** and save Settings.
 2. Mark an order **paid**, then **Print Factura** — expect success and invoice showing fiscal number + QR block (ValidarQR URL).
 3. Attempt to delete or edit line items on that order — expect **409** until fiscal cancel.
-4. **POST** `/orders/{id}/fiscal-invoice/cancel` — expect anulación number; delete should then succeed.
-5. Set **`fiscal_mode`** to **`off`** — print should match prior behaviour without calling issue (browser-only).
-6. Unpaid order with fiscal mode on — issue should fail with a clear error.
-7. Setting **`fiscal_mode: live`** without unlock/middleware — expect **400**.
+4. **Cancel fiscal invoice (anulación)** in Orders (Factura / edit order) or **POST** `/orders/{id}/fiscal-invoice/cancel` — expect anulación number; delete should then succeed.
+5. Multi-rate: order with lines at different IVA rates — issued `request_payload.line_items` and Fiskaly SIGN ES items should reflect those rates (not a single hardcoded 21%).
+6. Set **`fiscal_mode`** to **`off`** — print should match prior behaviour without calling issue (browser-only).
+7. Unpaid order with fiscal mode on — issue should fail with a clear error.
+8. Setting **`fiscal_mode: live`** without unlock/middleware — expect **400**.
 
 See also **`docs/0065-verifactu-production.md`**.
