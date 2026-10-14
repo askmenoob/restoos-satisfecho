@@ -10,15 +10,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Added
 
+### Changed
+
+### Fixed
+
+
+## [2.1.185] - 2026-10-14
+
+### Added
+
 - **VeriFactu staff anulación UI (#431):** Orders Factura and Edit order show cancel (anulación) when an active fiscal alta exists; wired to existing cancel API with success/error toasts.
 - **Fiskaly SIGN ES multi-rate IVA (#431):** Fiscal `request_payload.line_items` from order tax snapshots; middleware adapter maps per-line VAT rates (fallback single 21% only when lines missing).
 
 ### Changed
 
 - **Docs (#431):** `docs/0018` / `docs/0065` mark anulación UI and payload fidelity as shipped; remaining gaps are ops/legal.
-
-### Fixed
-
 
 ## [2.1.184] - 2026-10-14
 

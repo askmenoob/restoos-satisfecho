@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** VeriFactu staff anulación UI and multi-rate IVA Fiskaly mapping for #431 were implemented and verified.
+- **What was done:** Orders Factura/Edit show cancel (anulación) when an active alta exists; Fiskaly SIGN ES request_payload carries per-line IVA via line_items; docs 0018/0065 gap rows updated.
+- **What was tested:** Issue → 409 immutability → anulación UI (VF-C2) → delete OK; pytest fiscal_invoice_api 10 passed (multi-rate included); front build clean — **PASS**.
+- **Why closed:** All criteria passed; product owner feedback says safe to close for the two next-FEAT items.
+- **Closed at (UTC):** 2026-10-14 10:09
+---
+
 # VeriFactu: staff anulación UI + multi-rate IVA (#431)
 
 ## GitHub Issues
@@ -41,3 +51,31 @@ Do **not** re-run the status audit. Do **not** enable live remisión / `FISCAL_L
 6. **Multi-rate (API/pytest):** `docker compose exec back python3 -m pytest tests/test_fiscal_invoice_api.py -q` — expect pass including multi-rate line_items (10% + 21%).
 7. **Front build:** `docker logs --since 10m pos-front` — no TS/NG compile errors after Orders changes.
 8. **Out of scope / do not:** Do not set `FISCAL_LIVE_UNLOCK` or add real Fiskaly credentials for this test.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-10-14 10:01:41Z start → 2026-10-14 10:08:25Z end. Log window: ~10:04–10:08Z for fiscal API; front compile check through 10:08Z.
+2. **Environment:** `docker-compose.yml` + `docker-compose.dev.yml`; `BASE_URL=http://127.0.0.1:14202` (HAProxy); branch `development`. Fiscal mode set to `test` on tenant 1 for verification (no `FISCAL_LIVE_UNLOCK`, no vendor credentials).
+3. **What was tested:** Staff anulación UI on Orders Print Factura; immutability (409) before cancel; anulación confirm → toast; delete after cancel; multi-rate pytest; front build.
+4. **Results:**
+   - Prereq fiscal mode **test:** **PASS** — tenant settings `fiscal_mode=test` (series VF, tax_id present).
+   - Issue fiscal alta: **PASS** — `POST /orders/206/fiscal-invoice/issue` → `VF-1` / status issued; payload `line_items` stored with `vat_rate_percent: 21` for Pozole.
+   - Immutability before cancel: **PASS** — `DELETE /orders/206` → **409**; `PUT …/items/262` quantity → **409** with anulación-required detail.
+   - Anulación UI: **PASS** — Print Factura modal shows hint with `VF-1` and button “Cancel fiscal invoice (anulación)”; confirm dialog; `POST …/fiscal-invoice/cancel` **200**; toast “Fiscal cancellation issued: VF-C2”; DB alta → `cancelled`, new `anulacion` `VF-C2`.
+   - After cancel delete/edit: **PASS** — `DELETE /orders/206` → **200** `{"status":"deleted"}`.
+   - Multi-rate pytest: **PASS** — `tests/test_fiscal_invoice_api.py` **10 passed**; targeted multi-rate tests **2 passed**.
+   - Front build: **PASS** — after Orders methods landed, rebuilds complete with no TS/NG errors (transient mid-edit TS2339/TS2341 around 09:58Z only; later bundles clean).
+   - Contrast: **PASS** — new control uses existing `btn btn-secondary` tokens (no new colour/brand wash in this change).
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Staff can cancel an active VeriFactu alta from the Factura modal with a clear confirm and cancellation number, then edit/delete again. Multi-rate line_items are covered by pytest and appear in the stored request payload. Safe to close from a product perspective for the two next-FEAT items.
+7. **URLs tested:**
+   1. http://127.0.0.1:14202/login?tenant=1
+   2. http://127.0.0.1:14202/dashboard (post-login)
+   3. http://127.0.0.1:14202/staff/orders
+8. **Relevant log excerpts:**
+   - `POST /orders/206/fiscal-invoice/issue HTTP/1.1" 200`
+   - `DELETE /orders/206 HTTP/1.1" 409`
+   - `PUT /orders/206/items/262 HTTP/1.1" 409`
+   - `POST /orders/206/fiscal-invoice/cancel HTTP/1.1" 200`
+   - `DELETE /orders/206 HTTP/1.1" 200`
+   - pytest: `10 passed` / multi-rate `2 passed`
