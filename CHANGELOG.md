@@ -10,6 +10,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Added
 
+- **Upstream monitor (#432):** The agent loop now checks public activity on URY, FloCafe, NodeDR OrderRestro, and TastyIgniter about once a week. When something looks worth adapting, it can open at most one Satisfecho issue per project. The first scan only records a baseline and files nothing.
+
 ### Changed
 
 ### Fixed
