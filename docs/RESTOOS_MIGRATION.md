@@ -53,3 +53,13 @@
 - Both HTTPS health endpoints returned HTTP 200; existing V1 stayed healthy and untouched.
 - V2 payment provider Malaysia, MyInvois, cash reconciliation, old QR URL redirects and cutover test still NOT verified. Do not claim production cutover.
 - Stage credentials private under ignored back/uploads/_import/legacy-staff-temp-credentials.json. Never commit them.
+
+## Production cutover (2026-10-20 23:31 MYT)
+- Authorized by user request to complete migration. V1 had no OPEN sessions and its live counts still matched imported snapshot (12 orders, 7 payments, 15 items, RM239.20).
+- Main Cloudflare tunnel origin routed from 127.0.0.1:4462 (V1) to 127.0.0.1:4472 (Satisfecho V2). Original V1 stack and database kept running.
+- Reversible routing config backup: /mnt/data/projects/restoos-migration-backups/v1-origin-before-v2-live-20261020-233131.yml.
+- V2 production HTTPS homepage and /api/health 200; browser UAT on main domain login and pages PASS owner/waiter/kitchen/cashier.
+- Legacy printed QR redirect preserved and HTTPS verified at staging prior to cutover.
+- V2 native migration verify passes 5 staff, 12 tables, 12 paid historical orders, 15 items, 12 allocated payment legs, matching RM239.20.
+- Remaining product gaps (do not claim ready for real merchant billing): Malaysia verified payment gateway, MyInvois, final cash-register hardware, complete end-to-end settlement and load/security testing.
+- **Immediate rollback**: copy saved backup ingress into /mnt/data/projects/imai-restoos/ops/cloudflared.yml then docker restart imai-restoos-tunnel-1; check /api/health returns V1 service version 0.1.0. Do not overwrite either DB.
