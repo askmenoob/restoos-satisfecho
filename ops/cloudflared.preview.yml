@@ -1,0 +1,8 @@
+tunnel: 80f41fbb-a8ba-4846-a931-77eeaf9e2997
+credentials-file: /etc/cloudflared/credentials.json
+ingress:
+  - hostname: restoos-v2.imai.my
+    service: http://127.0.0.1:4472
+    originRequest:
+      connectTimeout: 10s
+  - service: http_status:404

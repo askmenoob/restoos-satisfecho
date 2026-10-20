@@ -1,0 +1,60 @@
+# IMAI RestoOS staging override — isolated from /mnt/data/projects/mejalah and current RestoOS.
+# Run selected services only: db redis back ws-bridge front. DO NOT start haproxy.
+name: restoos-satisfecho
+services:
+  db:
+    container_name: restoos-satisfecho-db
+    volumes:
+      - ./ops/20-bootstrap-enums.sql:/docker-entrypoint-initdb.d/20-bootstrap-enums.sql:ro
+    ports:
+      - "127.0.0.1:45433:5432"
+  redis:
+    container_name: restoos-satisfecho-redis
+    ports:
+      - "127.0.0.1:46379:6379"
+  back:
+    image: restoos-satisfecho-back:staging
+    container_name: restoos-satisfecho-back
+    environment:
+      PRODUCTION: "true"
+      CORS_ORIGINS: "https://restoos-v2.imai.my,https://restoos.imai.my"
+    networks:
+      pos2_net:
+        aliases: [pos-back]
+  ws-bridge:
+    image: restoos-satisfecho-ws:staging
+    container_name: restoos-satisfecho-ws
+    networks:
+      pos2_net:
+        aliases: [pos-ws-bridge]
+  front:
+    container_name: restoos-satisfecho-front
+    build:
+      context: ./front
+      dockerfile: Dockerfile.prod
+      args:
+        COMMIT_HASH: ${COMMIT_HASH:-}
+    ports:
+      - "127.0.0.1:4472:80"
+    environment:
+      API_URL: /api
+      WS_URL: /ws
+      SYNC_MARKETING_ON_START: "0"
+    networks:
+      - pos2_net
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.0
+    container_name: restoos-satisfecho-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    user: "1000:1000"
+    network_mode: host
+    volumes:
+      - ./ops/cloudflared.preview.yml:/etc/cloudflared/config.yml:ro
+      - /home/askme/.cloudflared/80f41fbb-a8ba-4846-a931-77eeaf9e2997.json:/etc/cloudflared/credentials.json:ro
+    depends_on: [front]
+  haproxy:
+    container_name: restoos-satisfecho-haproxy
+networks:
+  pos2_net:
+    name: restoos-satisfecho-net

@@ -74,6 +74,7 @@ import { environment } from '../../environments/environment';
             </svg>
           </a>
         </div>
+        <p class="landing-version-company"><a href="https://github.com/askmenoob/restoos-satisfecho" target="_blank" rel="noopener noreferrer">RestoOS V2 modified source (AGPL-3.0)</a> · Based on <a href="https://github.com/satisfecho/pos" target="_blank" rel="noopener noreferrer">Satisfecho POS</a>.</p>
         <p class="landing-version-company" data-testid="landing-company">
           {{ 'LANDING.COMPANY_OPERATOR' | translate }}
         </p>

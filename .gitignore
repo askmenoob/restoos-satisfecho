@@ -77,3 +77,6 @@ dist/
 # Local secrets (GitHub tokens, GA measurement ID, etc. — never commit)
 .secrets
 # Keep .secrets.example committed as the template
+
+# IMAI RestoOS migration staging (contains host diagnostics and private UAT state)
+.ai/

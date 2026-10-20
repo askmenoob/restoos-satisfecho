@@ -67,7 +67,7 @@ type NavGroupKey = 'operations' | 'planning' | 'catalog' | 'admin';
                 [attr.aria-label]="brandTitle()"
                 data-testid="sidebar-brand-home"
                 (click)="closeSidebar()"
-              >POS</a>
+              >RestoOS</a>
               <app-language-picker appearance="icon" class="sidebar-lang"></app-language-picker>
             </div>
             <button
@@ -460,7 +460,7 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
 
   brandTitle = computed(() => {
     const org = this.tenantOrgName();
-    return org ? `POS (${org})` : 'POS';
+    return org ? `RestoOS (${org})` : 'RestoOS';
   });
 
   openChangelog() {
